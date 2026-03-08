@@ -1,0 +1,311 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ADMIN SHARED STYLES - Select Boxes, Inputs, Forms
+   Include in all admin pages: <link rel="stylesheet" href="admin_shared.css">
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── SELECT / DROPDOWN ───────────────────────────────────────────────── */
+select,
+select.modern-input,
+select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: 12px 42px 12px 16px;
+    background-color: rgba(15, 23, 42, 0.8);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238B5CF6' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 5.646a.5.5 0 0 1 .708 0L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 12px;
+    color: #F8FAFC;
+    font-size: 0.92rem;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    line-height: 1.5;
+}
+
+select:hover,
+select.modern-input:hover,
+select.form-control:hover {
+    border-color: rgba(139, 92, 246, 0.45);
+    background-color: rgba(15, 23, 42, 0.95);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+
+select:focus,
+select.modern-input:focus,
+select.form-control:focus {
+    border-color: #8B5CF6;
+    background-color: rgba(15, 23, 42, 1);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Dropdown options styling */
+select option {
+    background: #0f172a;
+    color: #F8FAFC;
+    padding: 12px 16px;
+    font-size: 0.92rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+select option:hover,
+select option:checked {
+    background: rgba(139, 92, 246, 0.25) !important;
+    color: #C4B5FD;
+}
+
+select option:disabled {
+    color: #475569;
+}
+
+/* ── INPUT FIELDS ────────────────────────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="date"],
+input.modern-input,
+input.form-control,
+textarea,
+textarea.modern-input,
+textarea.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 12px;
+    color: #F8FAFC;
+    font-size: 0.92rem;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    line-height: 1.5;
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover,
+input[type="number"]:hover,
+input[type="url"]:hover,
+input[type="search"]:hover,
+input[type="tel"]:hover,
+input[type="date"]:hover,
+input.modern-input:hover,
+input.form-control:hover,
+textarea:hover,
+textarea.modern-input:hover,
+textarea.form-control:hover {
+    border-color: rgba(139, 92, 246, 0.45);
+    background-color: rgba(15, 23, 42, 0.95);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="url"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input.modern-input:focus,
+input.form-control:focus,
+textarea:focus,
+textarea.modern-input:focus,
+textarea.form-control:focus {
+    border-color: #8B5CF6;
+    background-color: rgba(15, 23, 42, 1);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #475569;
+    font-weight: 400;
+}
+
+/* ── RANGE INPUT ─────────────────────────────────────────────────────── */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.6));
+    border-radius: 50px;
+    outline: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── CHECKBOX & RADIO ────────────────────────────────────────────────── */
+input[type="checkbox"],
+input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+
+input[type="radio"] {
+    border-radius: 50%;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    border-color: #8B5CF6;
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* ── FORM LABELS ─────────────────────────────────────────────────────── */
+.form-group label,
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #94A3B8;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ── TEXTAREA ────────────────────────────────────────────────────────── */
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ── DISABLED STATES ─────────────────────────────────────────────────── */
+select:disabled,
+input:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: rgba(15, 23, 42, 0.4) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ── FILE INPUT ──────────────────────────────────────────────────────── */
+input[type="file"] {
+    padding: 10px 16px;
+    background-color: rgba(15, 23, 42, 0.8);
+    border: 1px dashed rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    color: #94A3B8;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #8B5CF6;
+    background-color: rgba(139, 92, 246, 0.05);
+}
+
+input[type="file"]::file-selector-button {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.6);
+}
