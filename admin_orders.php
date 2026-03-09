@@ -90,9 +90,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $new_status = $_POST['status'];
         $admin_note = $_POST['admin_note'] ?? '';
         
-        $stmt = $pdo->prepare("UPDATE orders SET status = ?, admin_note = ?, updated_at = NOW() WHERE order_id = ?");
-        $stmt->execute([$new_status, $admin_note, $order_id]);
-        $_SESSION['success'] = "Sipariş durumu güncellendi!";
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_id = ?");
+        $stmt->execute([$order_id]);
+        $order = $stmt->fetch();
+        
+        if ($order) {
+            // Eğer sipariş iptal veya iade durumuna çekiliyorsa ve önceden bu durumda değilse
+            if (($new_status == 'refunded' || $new_status == 'cancelled') && $order['status'] != 'refunded' && $order['status'] != 'cancelled') {
+                $pdo->beginTransaction();
+                
+                $stmt = $pdo->prepare("UPDATE orders SET status = ?, admin_note = ?, updated_at = NOW() WHERE order_id = ?");
+                $stmt->execute([$new_status, $admin_note, $order_id]);
+                
+                $refund_amount = floatval($order['total_price'] > 0 ? $order['total_price'] : $order['price']);
+                
+                if ($refund_amount > 0) {
+                    $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
+                    $stmt->execute([$refund_amount, $order['user_id']]);
+                    
+                    $action_name = $new_status == 'cancelled' ? 'İptal' : 'İade';
+                    $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, amount, description, created_at) VALUES (?, 'refund', ?, ?, NOW())");
+                    $stmt->execute([$order['user_id'], $refund_amount, "Sipariş {$action_name} Edildi (#{$order['order_id']})"]);
+                }
+                
+                $pdo->commit();
+                $_SESSION['success'] = "Sipariş durumu güncellendi ve bakiye hesabına yatırıldı!";
+            } else {
+                $stmt = $pdo->prepare("UPDATE orders SET status = ?, admin_note = ?, updated_at = NOW() WHERE order_id = ?");
+                $stmt->execute([$new_status, $admin_note, $order_id]);
+                $_SESSION['success'] = "Sipariş durumu güncellendi!";
+            }
+        }
     }
     
     if (isset($_POST['refund_order'])) {
@@ -106,11 +134,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $pdo->prepare("UPDATE orders SET status = 'refunded', updated_at = NOW() WHERE id = ?");
             $stmt->execute([$order['id']]);
             
-            $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
-            $stmt->execute([$order['price'], $order['user_id']]);
+            $refund_amount = floatval($order['total_price'] > 0 ? $order['total_price'] : $order['price']);
             
-            $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, amount, description, created_at) VALUES (?, 'refund', ?, ?, NOW())");
-            $stmt->execute([$order['user_id'], $order['price'], "Sipariş İadesi (#{$order['order_id']})"]);
+            if ($refund_amount > 0) {
+                $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
+                $stmt->execute([$refund_amount, $order['user_id']]);
+                
+                $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, amount, description, created_at) VALUES (?, 'refund', ?, ?, NOW())");
+                $stmt->execute([$order['user_id'], $refund_amount, "Sipariş İadesi (#{$order['order_id']})"]);
+            }
             
             $pdo->commit();
             $_SESSION['success'] = "Sipariş iade edildi ve bakiye geri yüklendi!";
@@ -122,6 +154,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $pdo->prepare("DELETE FROM orders WHERE order_id = ?");
         $stmt->execute([$order_id]);
         $_SESSION['success'] = "Sipariş silindi!";
+    }
+    
+    if (isset($_POST['sync_orders'])) {
+        ob_start();
+        include 'cron_orders.php';
+        $sync_output = ob_get_clean();
+        $_SESSION['success'] = "Senkronizasyon Tamamlandı! Detay:<br><small>".$sync_output."</small>";
     }
     
     header("Location: admin_orders.php");
@@ -248,7 +287,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <div class="page-header">
             <h1>Sipariş <span class="gradient-text">Yönetimi</span></h1>
-            <button onclick="exportOrders()" class="btn btn-success"><i class="fas fa-file-excel"></i> Excel'e Aktar</button>
+            <div style="display:flex; gap:10px;">
+                <form method="POST" style="margin:0;">
+                    <input type="hidden" name="sync_orders" value="1">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Durumları Senkronize Et</button>
+                </form>
+                <button onclick="exportOrders()" class="btn btn-success"><i class="fas fa-file-excel"></i> Excel'e Aktar</button>
+            </div>
         </div>
 
         <div class="stats-grid">
@@ -357,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     </button>
                                     
                                     <?php if($order['status'] !== 'refunded'): ?>
-                                    <button class="action-btn btn-refund" onclick="confirmRefund('<?php echo $order['order_id']; ?>', <?php echo $order['price']; ?>)" title="İade Et">
+                                    <button class="action-btn btn-refund" onclick="confirmRefund('<?php echo $order['order_id']; ?>', <?php echo (floatval($order['total_price']) > 0 ? $order['total_price'] : $order['price']); ?>)" title="İade Et">
                                         <i class="fas fa-undo"></i>
                                     </button>
                                     <?php endif; ?>
@@ -489,6 +534,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         function exportOrders() {
             alert('Excel export özelliği yakında eklenecek.');
         }
+
+        // Otomatik Senkronizasyon (Her 60 saniyede bir arka planda API'ye sorar)
+        setInterval(function() {
+            fetch('cron_orders.php')
+            .then(response => response.text())
+            .then(data => {
+                // Eğer güncellenen sipariş varsa sayfayı otomatik yenileyelim
+                if (data.indexOf('Guncellenen Siparis Sayisi') !== -1 && data.indexOf(': 0') === -1) {
+                    console.log('Sipariş durumları API den güncellendi, liste yenileniyor...');
+                    window.location.reload();
+                }
+            })
+            .catch(error => console.error('Auto-sync error:', error));
+        }, 60000); // 60 saniyede bir çalışır
     </script>
 </body>
 </html>

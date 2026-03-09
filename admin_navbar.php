@@ -150,6 +150,36 @@ if (!isset($admin)) $admin = ['username' => 'Admin'];
         }
         .admin-navbar .nav-links.open { display: flex; }
         .admin-navbar .nav-links a { width: 100%; padding: 12px 15px; font-size: 0.95rem; }
+        
+        /* Global Grid Overrides for App Feel in Admin Panel */
+        .dashboard-grid, .stats-grid, .settings-grid { grid-template-columns: 1fr !important; }
+        .container, .main-content { padding-left: 15px !important; padding-right: 15px !important; }
+    }
+    
+    @media (max-width: 576px) {
+        /* App-Like Header Adjustments */
+        .admin-navbar { padding: 10px 0; }
+        .admin-navbar .nav-logo { font-size: 1.1rem; gap: 6px; }
+        .admin-navbar .nav-logo img { height: 26px !important; }
+        .badge-admin { padding: 2px 5px !important; font-size: 0.55rem !important; }
+        
+        .admin-navbar .nav-right { gap: 8px; }
+        .admin-navbar .nav-user { display: none; } /* Hide admin name to save space */
+        .admin-navbar .nav-logout { padding: 5px 8px; font-size: 0; }
+        .admin-navbar .nav-logout i { margin-right: 0; font-size: 1.1rem; }
+        
+        /* Cards and Elements */
+        .card, .stat-card { padding: 15px !important; border-radius: 16px !important; }
+        
+        /* Typography */
+        body { font-size: 0.95rem; }
+        h1 { font-size: 1.4rem !important; }
+        h2 { font-size: 1.25rem !important; }
+        
+        /* Tables to Vertical Cards or Scrollable Arrays */
+        .table-glass-container { padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
+        .modern-table th, .modern-table td { padding: 10px 12px !important; font-size: 0.85rem !important; white-space: nowrap; }
     }
 </style>
 

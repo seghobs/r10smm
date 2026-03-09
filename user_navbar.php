@@ -23,15 +23,15 @@ if (!isset($unread_notif_count) || !isset($notifications)) {
     .navbar.scrolled { padding: 15px 0; background: rgba(2, 6, 23, 0.95); }
     .nav-container-inner { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
     
-    .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; text-decoration: none; color: white; letter-spacing: -0.5px; }
-    .nav-logo i { color: #8B5CF6; font-size: 1.8rem; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)); }
+    .nav-logo { display: flex; align-items: center; gap: 8px; font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; text-decoration: none; color: white; letter-spacing: -0.5px; white-space: nowrap; }
+    .nav-logo i { color: #8B5CF6; font-size: 1.6rem; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)); }
 
-    .nav-menu { display: flex; gap: 20px; align-items: center; }
-    .nav-menu a { text-decoration: none; color: #94A3B8; font-weight: 500; transition: 0.3s; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; }
+    .nav-menu { display: flex; gap: 10px; align-items: center; }
+    .nav-menu a { text-decoration: none; color: #94A3B8; font-weight: 500; transition: 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 12px; white-space: nowrap; }
     .nav-menu a:hover, .nav-menu a.active { color: white; background: rgba(255,255,255,0.05); }
     .nav-menu a.active { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
 
-    .user-menu { display: flex; align-items: center; gap: 15px; position: relative; }
+    .user-menu { display: flex; align-items: center; gap: 10px; position: relative; white-space: nowrap; }
     .balance-badge { background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 6px 12px; border-radius: 20px; font-weight: 600; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; border: 1px solid rgba(16, 185, 129, 0.2); }
     
     .menu-toggle { display: none; font-size: 1.5rem; color: white; cursor: pointer; background: none; border: none; }
@@ -68,11 +68,54 @@ if (!isset($unread_notif_count) || !isset($notifications)) {
     @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
     @media (max-width: 992px) {
-        .nav-menu { display: none; position: fixed; top: 70px; left: 0; width: 100%; background: rgba(2,6,23,0.98); flex-direction: column; padding: 20px; height: calc(100vh - 70px); align-items: flex-start; }
+        .nav-menu { display: none; position: fixed; top: 70px; left: 0; width: 100%; background: rgba(2,6,23,0.98); flex-direction: column; padding: 20px; height: calc(100vh - 70px); align-items: flex-start; z-index: 1000; overflow-y: auto; }
         .nav-menu.active { display: flex; }
         .nav-menu a { width: 100%; padding: 12px 15px; font-size: 1.05rem; }
         .menu-toggle { display: block; }
         .ticker-wrap { top: 70px; }
+        
+        /* Global Grid Overrides for App Feel */
+        .dashboard-sections, .info-cards, .filters-grid, .auth-grid, .about-grid, .values-grid { grid-template-columns: 1fr !important; }
+        .container, .nav-container-inner, .main-content { padding-left: 15px !important; padding-right: 15px !important; }
+    }
+
+    @media (max-width: 576px) {
+        /* App-Like Header Enhancements */
+        .navbar { padding: 12px 0; }
+        .navbar.scrolled { padding: 10px 0; }
+        .nav-logo { font-size: 1.15rem; gap: 6px; }
+        .nav-logo i { font-size: 1.3rem; }
+        .nav-logo img { height: 26px !important; }
+        
+        .user-menu { gap: 8px; }
+        .balance-badge { padding: 5px 8px; font-size: 0.8rem; border-radius: 8px; }
+        .btn-outline-nav { padding: 5px 8px; font-size: 0.8rem; justify-content: center; }
+        .btn-outline-nav span { display: none; } /* Hide text, keep icon */
+        .notif-bell { font-size: 1.05rem; }
+        .menu-toggle { font-size: 1.25rem; }
+        .notif-dropdown { position: fixed; top: 60px; left: 15px; right: 15px; width: auto; max-width: none; }
+        
+        /* Typography and Padding logic */
+        h1 { font-size: 1.5rem !important; }
+        h2 { font-size: 1.3rem !important; }
+        body { font-size: 0.95rem; }
+        
+        /* Cards and Elements */
+        .card, .content-card, .login-box, .register-box, .service-card { padding: 15px !important; border-radius: 16px !important; }
+        .list-item { padding: 12px !important; }
+        
+        /* Tables to Vertical Cards on small mobiles (Optional or Horizontal Scroll) */
+        .table-glass-container { padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
+        .modern-table th, .modern-table td { padding: 10px 12px !important; font-size: 0.85rem !important; white-space: nowrap; }
+        
+        /* Ticker text for mobile */
+        .ticker-item { font-size: 0.8rem; padding: 0 10px; }
+    }
+    
+    @media (max-width: 400px) {
+        .balance-badge span { display: none; } /* Hide ₺ symbol if absolutely needed, or adjust */
+        .nav-logo span { display: none; } /* Hide 'SMM Panel' text on very tiny screens to save space */
     }
 </style>
 
@@ -90,6 +133,7 @@ if (!isset($unread_notif_count) || !isset($notifications)) {
         
         <div class="nav-menu" id="navMenu">
             <a href="dashboard.php" <?php echo ($current_page == 'dashboard.php') ? 'class="active"' : ''; ?>><i class="fas fa-home"></i> Dashboard</a>
+            <a href="new_order.php" <?php echo ($current_page == 'new_order.php') ? 'class="active"' : ''; ?>><i class="fas fa-cart-plus"></i> Sipariş Ver</a>
             <a href="services.php" <?php echo ($current_page == 'services.php') ? 'class="active"' : ''; ?>><i class="fas fa-box"></i> Hizmetler</a>
             <a href="orders.php" <?php echo ($current_page == 'orders.php') ? 'class="active"' : ''; ?>><i class="fas fa-history"></i> Siparişler</a>
             <a href="balance.php" <?php echo ($current_page == 'balance.php') ? 'class="active"' : ''; ?>><i class="fas fa-wallet"></i> Bakiye</a>
@@ -117,7 +161,7 @@ if (!isset($unread_notif_count) || !isset($notifications)) {
                             <div class="notif-empty">Henüz bildirim yok.</div>
                         <?php else: ?>
                             <?php foreach($notifications as $notif): ?>
-                                <div class="notif-item <?php echo $notif['is_read'] ? '' : 'unread'; ?>">
+                                <div class="notif-item <?php echo $notif['is_read'] ? '' : 'unread'; ?>" onclick="window.location.href='orders.php'" style="cursor:pointer;">
                                     <div class="notif-title"><?php echo htmlspecialchars($notif['title']); ?></div>
                                     <div class="notif-msg"><?php echo htmlspecialchars($notif['message']); ?></div>
                                     <div class="notif-time"><?php echo date('d.m H:i', strtotime($notif['created_at'])); ?></div>
@@ -131,19 +175,33 @@ if (!isset($unread_notif_count) || !isset($notifications)) {
             <?php if (isset($user['balance'])): ?>
             <div class="balance-badge"><i class="fas fa-coins"></i> ₺<?php echo number_format($user['balance'], 2); ?></div>
             <?php endif; ?>
-            <a href="logout.php" class="btn-outline-nav">Çıkış</a>
+            <a href="logout.php" class="btn-outline-nav"><i class="fas fa-sign-out-alt"></i> <span>Çıkış</span></a>
         </div>
     </div>
 </nav>
 
+<?php if (defined('ANNOUNCEMENT_ACTIVE') && ANNOUNCEMENT_ACTIVE == '1' && defined('ANNOUNCEMENT_CONTENT') && !empty(ANNOUNCEMENT_CONTENT)): 
+    $tickers = json_decode(ANNOUNCEMENT_CONTENT, true);
+    if (!is_array($tickers)) {
+        // Migration support from raw HTML to json
+        $tickers = [['icon' => 'fas fa-bullhorn', 'text' => strip_tags(ANNOUNCEMENT_CONTENT), 'link' => '', 'link_text' => '']];
+    }
+    if (count($tickers) > 0):
+?>
 <div class="ticker-wrap">
     <div class="ticker">
-        <div class="ticker-item"><i class="fab fa-telegram"></i> Güncel duyurular için Telegram kanalımıza katılın: <a href="https://t.me/PrimalTriad" target="_blank">@PrimalTriad</a></div>
-        <div class="ticker-item"><i class="fas fa-comments"></i> Sohbet ve yardımlaşma grubumuz: <a href="#" target="_blank">@yakında</a></div>
-        <div class="ticker-item"><i class="fas fa-bolt"></i> Yeni servisler eklendi! Fiyatlar güncellendi. Hemen inceleyin.</div>
-        <div class="ticker-item"><i class="fas fa-star"></i> Haftanın en çok sipariş verilen servisi: Instagram Garantili Takipçi!</div>
+        <?php foreach ($tickers as $t): ?>
+            <div class="ticker-item">
+                <?php if (!empty($t['icon'])): ?><i class="<?php echo htmlspecialchars($t['icon']); ?>"></i><?php endif; ?>
+                <?php echo htmlspecialchars($t['text']); ?>
+                <?php if (!empty($t['link']) && !empty($t['link_text'])): ?>
+                    <a href="<?php echo htmlspecialchars($t['link']); ?>" target="_blank"><?php echo htmlspecialchars($t['link_text']); ?></a>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
+<?php endif; endif; ?>
 
 <script>
     const menuToggle = document.getElementById('menuToggle');
@@ -166,7 +224,7 @@ if (!isset($unread_notif_count) || !isset($notifications)) {
 
     function markAllRead(e) {
         e.stopPropagation();
-        fetch('dashboard.php', {
+        fetch('ajax_read_notif', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'action=read_notifications'

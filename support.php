@@ -179,18 +179,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $priority = htmlspecialchars($_POST['priority']);
         $message = htmlspecialchars($_POST['message']);
         
+        $order_id_input = isset($_POST['order_id']) ? htmlspecialchars($_POST['order_id']) : '';
+        
         if (empty($subject) || empty($message)) {
             $error = "Lütfen konu ve mesaj alanlarını doldurun.";
         } else {
             $ticket_id = 'TKT' . strtoupper(uniqid());
             
+            $final_message = $message;
+            if ($category == 'sipariş' && !empty($order_id_input)) {
+                $final_message = "📦 Sipariş ID: #" . $order_id_input . "\n\n" . $message;
+            }
+
             $stmt = $pdo->prepare("INSERT INTO support_tickets (ticket_id, user_id, username, subject, category, priority, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'open')");
-            $stmt->execute([$ticket_id, $_SESSION['user_id'], $user['username'], $subject, $category, $priority, $message]);
+            $stmt->execute([$ticket_id, $_SESSION['user_id'], $user['username'], $subject, $category, $priority, $final_message]);
             
+            // Kullanıcıya bildirim
             $stmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, created_at) VALUES (?, ?, ?, 'info', NOW())");
             $stmt->execute([$_SESSION['user_id'], 'Destek Talebi Oluşturuldu', "Talebiniz (#{$ticket_id}) alındı. En kısa sürede yanıtlanacaktır."]);
 
-            $success = "Destek talebiniz başarıyla oluşturuldu.";
+            // Adminin bildirimlerine de düş (admin user_id=1 varsayımı, sistemden çekiyoruz)
+            try {
+                $admin_stmt = $pdo->query("SELECT id FROM users WHERE user_role IN ('admin','super_admin') LIMIT 5");
+                $admins = $admin_stmt->fetchAll();
+                foreach ($admins as $adm) {
+                    $an = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, created_at) VALUES (?, ?, ?, 'warning', NOW())");
+                    $an->execute([$adm['id'], '🎫 Yeni Destek Talebi', "{$user['username']} kullanıcısından yeni destek talebi: \"{$subject}\" (#{$ticket_id})"]);
+                }
+            } catch (Exception $e) {}
+
+            $success = "Destek talebiniz başarıyla oluşturuldu. Talep ID: #{$ticket_id}";
         }
     }
     
@@ -215,35 +233,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-    
-    if (isset($_POST['send_live_message'])) {
-        $message = htmlspecialchars($_POST['live_message']);
-        
-        if (!empty($message)) {
-            try {
-                $stmt = $pdo->prepare("INSERT INTO live_support_messages (user_id, message, is_admin, created_at) VALUES (?, ?, 0, NOW())");
-                $stmt->execute([$_SESSION['user_id'], $message]);
-                
-                $ai_replies = [
-                    "Mesajınız alındı. Destek ekibimiz en kısa sürede dönüş yapacaktır.",
-                    "Anlaşıldı, konuyu inceliyoruz.",
-                    "Lütfen bekleyin, yetkili birime aktarıyorum.",
-                    "Sorununuzla ilgili kayıt oluşturuldu.",
-                    "Size nasıl yardımcı olabileceğimi kontrol ediyorum."
-                ];
-                $random_reply = $ai_replies[array_rand($ai_replies)];
-                
-                $stmt = $pdo->prepare("INSERT INTO live_support_messages (user_id, message, is_admin, created_at) VALUES (?, ?, 1, NOW())");
-                $stmt->execute([$_SESSION['user_id'], $random_reply]);
-
-                $stmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, created_at) VALUES (?, ?, ?, 'info', NOW())");
-                $stmt->execute([$_SESSION['user_id'], 'Canlı Destek', 'Destek ekibinden yeni bir mesajınız var.']);
-                
-            } catch (PDOException $e) {}
-            header("Location: support.php#liveChat");
-            exit;
-        }
-    }
 }
 
 $tickets = [];
@@ -262,12 +251,7 @@ if (!empty($tickets)) {
     }
 }
 
-$live_chat_messages = [];
-try {
-    $stmt = $pdo->prepare("SELECT * FROM live_support_messages WHERE user_id = ? ORDER BY created_at ASC LIMIT 50");
-    $stmt->execute([$_SESSION['user_id']]);
-    $live_chat_messages = $stmt->fetchAll();
-} catch (PDOException $e) {}
+
 ?>
 <!DOCTYPE html>
 <html lang="tr">
@@ -509,12 +493,17 @@ try {
                     
                     <div class="form-group">
                         <label>Kategori</label>
-                        <select name="category" class="modern-input" style="appearance: none;">
+                        <select name="category" id="ticketCategory" class="modern-input" style="appearance: none;" onchange="toggleOrderInput()">
                             <option value="sipariş">Sipariş Sorunu</option>
                             <option value="ödeme">Ödeme Bildirimi</option>
                             <option value="api">API Sorunu</option>
                             <option value="diğer">Diğer</option>
                         </select>
+                    </div>
+
+                    <div class="form-group" id="orderIdGroup">
+                        <label>Sipariş ID (İsteğe Bağlı)</label>
+                        <input type="text" name="order_id" id="order_id" class="modern-input" placeholder="Örn: 20261234">
                     </div>
                     
                     <div class="form-group">
@@ -570,28 +559,6 @@ try {
         </div>
     </div>
 
-    <button class="live-chat-btn" onclick="toggleLiveChat()">
-        <i class="fas fa-comment-dots"></i>
-    </button>
-    
-    <div class="live-chat-modal" id="liveChatModal">
-        <div class="live-chat-header">
-            <div><i class="fas fa-headset"></i> Canlı Destek</div>
-            <div onclick="toggleLiveChat()" style="cursor: pointer;"><i class="fas fa-times"></i></div>
-        </div>
-        <div class="live-chat-body" id="liveChatBody">
-            <div class="live-msg ai">Merhaba! Size nasıl yardımcı olabilirim?</div>
-            <?php foreach($live_chat_messages as $msg): ?>
-                <div class="live-msg <?php echo $msg['is_admin'] ? 'ai' : 'user'; ?>">
-                    <?php echo htmlspecialchars($msg['message']); ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-        <form class="live-chat-footer" method="POST">
-            <input type="text" name="live_message" class="modern-input" placeholder="Mesaj yazın..." style="padding: 10px; font-size: 0.9rem;" required>
-            <button type="submit" name="send_live_message" class="btn btn-primary" style="width: 45px; height: 45px; padding: 0; border-radius: 12px;"><i class="fas fa-paper-plane"></i></button>
-        </form>
-    </div>
 
     <div class="modal" id="ticketModal">
         <div class="modal-content">
@@ -628,6 +595,22 @@ try {
             document.getElementById('priorityInput').value = p;
         }
 
+        function toggleOrderInput() {
+            const cat = document.getElementById('ticketCategory').value;
+            const group = document.getElementById('orderIdGroup');
+            if(cat === 'sipariş') {
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+                document.getElementById('order_id').value = '';
+            }
+        }
+        
+        // İlk yüklemede durum kontrolü
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleOrderInput();
+        });
+
         function showTicketDetails(id) {
             const modal = document.getElementById('ticketModal');
             const content = document.getElementById('modalContent');
@@ -662,15 +645,6 @@ try {
         }
 
         function closeModal() { document.getElementById('ticketModal').style.display = 'none'; }
-        
-        function toggleLiveChat() {
-            const chat = document.getElementById('liveChatModal');
-            chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
-            if(chat.style.display === 'flex') {
-                const body = document.getElementById('liveChatBody');
-                body.scrollTop = body.scrollHeight;
-            }
-        }
     </script>
 </body>
 </html>

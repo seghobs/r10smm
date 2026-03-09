@@ -341,7 +341,8 @@ $providers = $pdo->query("SELECT * FROM api_providers ORDER BY id DESC")->fetchA
                 <!-- Refresh Balance -->
                 <form method="POST" style="margin:0;" id="bal-form-<?php echo $p['id']; ?>">
                     <input type="hidden" name="provider_id" value="<?php echo $p['id']; ?>">
-                    <button type="submit" name="refresh_balance" class="btn btn-sm btn-success" onclick="spinBtn(this)">
+                    <input type="hidden" name="refresh_balance" value="1">
+                    <button type="submit" class="btn btn-sm btn-success" onclick="spinBtn(this)">
                         <i class="fas fa-wallet"></i> Bakiye
                     </button>
                 </form>
@@ -381,6 +382,7 @@ $providers = $pdo->query("SELECT * FROM api_providers ORDER BY id DESC")->fetchA
 
         <form method="POST" id="syncForm">
             <input type="hidden" name="provider_id" id="sync-provider-id">
+            <input type="hidden" name="sync_services" value="1">
 
             <div class="form-group" style="margin-bottom:22px;">
                 <label style="display:block;margin-bottom:10px;font-size:.9rem;font-weight:600;">Kâr Marjı (%)</label>
@@ -428,8 +430,10 @@ window.addEventListener('click', e => {
 
 document.getElementById('syncForm').addEventListener('submit', function() {
     const btn = document.getElementById('syncBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner loading-spin"></i> Çekiliyor...';
+    setTimeout(() => {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner loading-spin"></i> Çekiliyor...';
+    }, 10);
 });
 
 function copyKey(key, el) {
@@ -441,8 +445,10 @@ function copyKey(key, el) {
 }
 
 function spinBtn(btn) {
-    btn.innerHTML = '<i class="fas fa-spinner loading-spin"></i> ...';
-    btn.disabled = true;
+    setTimeout(() => {
+        btn.innerHTML = '<i class="fas fa-spinner loading-spin"></i> ...';
+        btn.disabled = true;
+    }, 10);
 }
 </script>
 </body>

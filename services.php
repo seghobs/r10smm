@@ -23,8 +23,15 @@ if (isset($_POST['action']) && $_POST['action'] == 'read_notifications') {
     exit;
 }
 
-$api_url = 'https://takipcinizbizden.com/api/v2';
-$api_key = '14fd5712a199e44cdd0412ec5e33d744';
+// Provider bilgisini her zaman DB'den çek
+$default_provider = $pdo->query("SELECT url, api_key FROM api_providers ORDER BY id ASC LIMIT 1")->fetch();
+if (!$default_provider) {
+    $api_url = '';
+    $api_key = '';
+} else {
+    $api_url = $default_provider['url'];
+    $api_key = $default_provider['api_key'];
+}
 
 // --- VERİTABANI GÜNCELLEME VE KONTROL ALANI ---
 try {
@@ -104,12 +111,25 @@ try {
             } elseif (strpos($service_name_lower, 'yavaş') !== false || strpos($service_name_lower, 'slow') !== false) {
                 $est_time = '0-24 Saat';
             }
+            
+            // Gruplama (Platform) Belirleme
+            $cat_lower = strtolower($category_name);
+            $group = 'Other';
+            if (strpos($cat_lower, 'instagram') !== false || strpos($cat_lower, 'ig') !== false) $group = 'Instagram';
+            elseif (strpos($cat_lower, 'tiktok') !== false) $group = 'TikTok';
+            elseif (strpos($cat_lower, 'youtube') !== false) $group = 'YouTube';
+            elseif (strpos($cat_lower, 'twitter') !== false || strpos($cat_lower, 'x.com') !== false) $group = 'Twitter';
+            elseif (strpos($cat_lower, 'facebook') !== false) $group = 'Facebook';
+            elseif (strpos($cat_lower, 'spotify') !== false) $group = 'Spotify';
+            elseif (strpos($cat_lower, 'telegram') !== false) $group = 'Telegram';
+            elseif (strpos($cat_lower, 'twitch') !== false) $group = 'Twitch';
 
             $services[] = [
                 'db_id' => $svc['id'],
                 'api_id' => $svc['api_service_id'],
                 'name' => $svc['name'],
                 'category' => $category_name,
+                'group' => $group,
                 'price_per_1000' => round(floatval($svc['price']), 2),
                 'cost_per_1000' => round(floatval($svc['cost']), 2),
                 'min' => max(intval($svc['min_quantity']), 10),
@@ -128,11 +148,18 @@ try {
 
 
 $total_services = count($services);
-$categories_count = [];
+$categories_count = [
+    'all' => $total_services,
+    'Instagram' => 0, 'TikTok' => 0, 'YouTube' => 0, 'Twitter' => 0,
+    'Facebook' => 0, 'Spotify' => 0, 'Telegram' => 0, 'Twitch' => 0, 'Other' => 0
+];
 foreach ($services as $service) {
-    $cat = $service['category'];
-    if (!isset($categories_count[$cat])) $categories_count[$cat] = 0;
-    $categories_count[$cat]++;
+    $grp = $service['group'];
+    if (isset($categories_count[$grp])) {
+        $categories_count[$grp]++;
+    } else {
+        $categories_count['Other']++;
+    }
 }
 
 $order_error = null;
@@ -402,7 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             </div>
             <div class="stat-card">
                 <div class="stat-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><div class="stat-value"><?php echo count($categories_count); ?></div><div class="stat-label">Kategori</div></div>
+                    <div><div class="stat-value">9</div><div class="stat-label">Platform</div></div>
                     <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
                 </div>
             </div>
@@ -473,6 +500,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 <?php foreach ($services as $service): ?>
                     <div class="service-card" 
                          data-category="<?php echo htmlspecialchars($service['category']); ?>" 
+                         data-group="<?php echo htmlspecialchars($service['group']); ?>" 
                          data-name="<?php echo htmlspecialchars(strtolower($service['name'])); ?>"
                          data-price="<?php echo $service['price_per_1000']; ?>">
                          
@@ -662,10 +690,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
             cards.forEach(card => {
                 const name = card.getAttribute('data-name');
-                const category = card.getAttribute('data-category');
+                const group = card.getAttribute('data-group');
+                const category = card.getAttribute('data-category').toLowerCase();
                 
-                const matchesSearch = name.includes(searchInput);
-                const matchesCategory = categorySelect === 'all' || category === categorySelect;
+                const matchesSearch = name.includes(searchInput) || category.includes(searchInput);
+                const matchesCategory = categorySelect === 'all' || group === categorySelect;
 
                 if (matchesSearch && matchesCategory) {
                     card.style.display = 'flex';

@@ -25,8 +25,15 @@ if (isset($_POST['action']) && $_POST['action'] == 'read_notifications') {
 
 $is_admin = ($user['user_role'] == 'admin' || $user['user_role'] == 'super_admin');
 
-$api_url = 'https://takipcinizbizden.com/api/v2';
-$api_key = '14fd5712a199e44cdd0412ec5e33d744';
+// Provider bilgisini her zaman DB'den çek
+$default_provider = $pdo->query("SELECT url, api_key FROM api_providers ORDER BY id ASC LIMIT 1")->fetch();
+if (!$default_provider) {
+    $api_url = '';
+    $api_key = '';
+} else {
+    $api_url = $default_provider['url'];
+    $api_key = $default_provider['api_key'];
+}
 
 function getStatusIcon($status) {
     switch(strtolower($status)) {
@@ -154,38 +161,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $order_id = $_POST['order_id'];
     
     try {
-        $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_id = ? AND user_id = ? AND status = 'pending'");
+        $stmt = $pdo->prepare("SELECT o.*, p.url as p_url, p.api_key as p_key FROM orders o LEFT JOIN services s ON o.service_id = s.id LEFT JOIN api_providers p ON s.provider_id = p.id WHERE o.order_id = ? AND o.user_id = ? AND o.status = 'pending'");
         $stmt->execute([$order_id, $user['id']]);
         $order = $stmt->fetch();
 
         if ($order) {
+            
+            $api_url_to_use = !empty($order['p_url']) ? $order['p_url'] : $api_url;
+            $api_key_to_use = !empty($order['p_key']) ? $order['p_key'] : $api_key;
+            if (empty($api_url_to_use) || empty($api_key_to_use)) {
+                echo json_encode(['success' => false, 'message' => 'Provider yapılandırması bulunamadı.']);
+                exit;
+            }
+
+            $can_cancel = true;
+            $api_error_text = "";
+
+            if (!empty($order['api_order_id'])) {
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => $api_url_to_use,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => http_build_query([
+                        'key' => $api_key_to_use,
+                        'action' => 'cancel', // SMM panel cancel action type (bazı sağlayıcılarda orders => [ids] şeklindedir)
+                        'order' => $order['api_order_id'] // Çoğu standart olmayan API cancel endpoint parametresi
+                    ]),
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_TIMEOUT => 15
+                ]);
+                
+                $response = curl_exec($ch);
+                curl_close($ch);
+                
+                if ($response) {
+                    $res_json = json_decode($response, true);
+                    if (isset($res_json['error'])) {
+                        $can_cancel = false;
+                        $api_error_text = $res_json['error'];
+                    }
+                } else {
+                    $can_cancel = false;
+                    $api_error_text = "API bağlantı hatası.";
+                }
+            }
+
+            if (!$can_cancel) {
+                echo json_encode(['success' => false, 'message' => "Sağlayıcı bu siparişin iptalini kabul etmiyor.<br><small>Hata: ".$api_error_text."</small>"]);
+                exit;
+            }
+
             $pdo->beginTransaction();
             
-            $stmt = $pdo->prepare("UPDATE orders SET status = 'cancelled' WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE orders SET status = 'cancelled', updated_at = NOW() WHERE id = ?");
             $stmt->execute([$order['id']]);
             
-            $refund_amount = $order['price'];
+            // Gerçek kesilen tutarı baz al: total_price veya price
+            $refund_amount = floatval($order['total_price'] > 0 ? $order['total_price'] : $order['price']);
             $new_balance = $user['balance'] + $refund_amount;
             
-            $stmt = $pdo->prepare("UPDATE users SET balance = ? WHERE id = ?");
-            $stmt->execute([$new_balance, $user['id']]);
-            
-            $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, amount, description, created_at) VALUES (?, 'refund', ?, ?, NOW())");
-            $stmt->execute([$user['id'], $refund_amount, "İade: Sipariş #{$order_id} iptali"]);
+            if ($refund_amount > 0) {
+                $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
+                $stmt->execute([$refund_amount, $user['id']]);
+                
+                $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, amount, description, created_at) VALUES (?, 'refund', ?, ?, NOW())");
+                $stmt->execute([$user['id'], $refund_amount, "İade: Sipariş #{$order_id} tarafınızca iptal edildi"]);
+            }
 
             $stmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, created_at) VALUES (?, ?, ?, 'danger', NOW())");
-            $stmt->execute([$user['id'], 'Sipariş İptal Edildi', "#{$order_id} nolu siparişiniz tarafınızca iptal edildi ve tutar bakiyenize iade edildi.", 'danger']);
+            $stmt->execute([$user['id'], 'Sipariş İptal Edildi', "#{$order_id} nolu siparişiniz iptal edildi ve tutar bakiyenize başarıyla iade edildi.", 'danger']);
             
             $pdo->commit();
             echo json_encode(['success' => true, 'refund_amount' => $refund_amount, 'new_balance' => $new_balance]);
+            exit;
         } else {
-            echo json_encode(['success' => false, 'message' => 'Sipariş iptal edilemez veya bulunamadı.']);
+            echo json_encode(['success' => false, 'message' => 'Sipariş bulunamadı veya iptal edilemez durumda (Sadece "Bekleyen" siparişler iptal edilebilir).']);
+            exit;
         }
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Veritabanı hatası.']);
+        echo json_encode(['success' => false, 'message' => 'Veritabanı işlemleri sırasında bir hata oluştu.']);
+        exit;
     }
-    exit;
 }
 
 updateOrderStatusFromAPI($pdo, $api_url, $api_key, $user['id']);

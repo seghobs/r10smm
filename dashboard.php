@@ -447,7 +447,7 @@ if (isset($_GET['logout'])) {
                 <h1>Hoş Geldin, <span class="gradient-text"><?php echo htmlspecialchars($user['username']); ?></span>! 👋</h1>
                 <p style="color: var(--text-muted);">Hesap durumun ve panel aktivitelerin aşağıdadır.</p>
             </div>
-            <a href="services.php" class="btn btn-primary"><i class="fas fa-rocket"></i> Hızlı Sipariş</a>
+            <a href="new_order.php" class="btn btn-primary"><i class="fas fa-rocket"></i> Hızlı Sipariş</a>
         </div>
 
         <?php if($answered_ticket_count > 0): ?>
@@ -766,10 +766,10 @@ if (isset($_GET['logout'])) {
         <div class="modal-content">
             <button class="close-modal" onclick="closeOrderModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; cursor:pointer;"><i class="fas fa-times"></i></button>
             <h2 style="margin-bottom:20px;">Sipariş Oluştur</h2>
-            <form action="create_order.php" method="POST">
+            <form action="create_order" method="POST">
                 <input type="hidden" id="modalServiceId" name="service_id">
                 <input type="text" id="modalServiceName" class="form-control" readonly>
-                <input type="url" name="link" id="modalLink" class="form-control" placeholder="Link (https://..)" required>
+                <input type="text" name="link" id="modalLink" class="form-control" placeholder="Link (https://..) veya Username" required>
                 <input type="number" id="quantity" name="quantity" class="form-control" placeholder="Miktar" required oninput="calculatePrice()">
                 <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between;">
                     <span>Toplam:</span><span id="totalPrice" style="font-weight:700; color:var(--primary);">₺0.00</span>

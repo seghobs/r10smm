@@ -33,6 +33,8 @@ try {
     define('BANK_IBAN', $sys_settings['bank_iban'] ?? 'TR...');
     define('SITE_LOGO_TEXT', $sys_settings['site_logo_text'] ?? 'r10 smm');
     define('SITE_LOGO_IMAGE', $sys_settings['site_logo_image'] ?? '');
+    define('ANNOUNCEMENT_ACTIVE', $sys_settings['announcement_active'] ?? '1');
+    define('ANNOUNCEMENT_CONTENT', $sys_settings['announcement_content'] ?? '');
 } catch(PDOException $e) {
     if (file_exists('install.php')) { header("Location: install.php"); exit; }
     die("DB Error");

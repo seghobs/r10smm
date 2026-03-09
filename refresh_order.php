@@ -23,11 +23,10 @@ if ($order_local_id <= 0) {
     exit;
 }
 
-$api_url = 'https://takipcinizbizden.com/api/v2';
-$api_key = '14fd5712a199e44cdd0412ec5e33d744';
+
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("SELECT o.*, p.url as p_url, p.api_key as p_key FROM orders o LEFT JOIN services s ON o.service_id = s.id LEFT JOIN api_providers p ON s.provider_id = p.id WHERE o.id = ? AND o.user_id = ?");
     $stmt->execute([$order_local_id, $_SESSION['user_id']]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -40,6 +39,9 @@ try {
         echo json_encode(['success' => false, 'message' => 'Bu siparişin API ID\'si yok.']);
         exit;
     }
+
+    $api_url = !empty($order['p_url']) ? $order['p_url'] : 'https://takipcinizbizden.com/api/v2';
+    $api_key = !empty($order['p_key']) ? $order['p_key'] : '14fd5712a199e44cdd0412ec5e33d744';
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $api_url);

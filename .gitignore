@@ -1,0 +1,6 @@
+# Test ve geçici dosyalar
+test_*.php
+fix_*.php
+list_*.php
+order_error_log.txt
+cookies.txt

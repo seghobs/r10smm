@@ -1,11 +1,14 @@
 <?php
 class RevamedyaAPI {
-    private $api_key = '14fd5712a199e44cdd0412ec5e33d744';
-    private $base_url = 'https://takipcinizbizden.com/api/v2';
+    private $api_key = '';
+    private $base_url = '';
     
-    public function __construct($api_key = null) {
+    public function __construct($api_key = null, $base_url = null) {
         if ($api_key) {
             $this->api_key = $api_key;
+        }
+        if ($base_url) {
+            $this->base_url = $base_url;
         }
     }
     

@@ -127,6 +127,72 @@ session_start();
 
     <?php include 'home_footer.php'; ?>
 
-    
+    <script>
+        // FAQ Katlanabilir (Accordion) Menü
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                
+                // Diğer açık olanları kapat (İsteğe bağlı - İstersen bu kısmı silebilirsin)
+                faqItems.forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                });
+                
+                // Tıklananı aç/kapat
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // Kategori Filtresi
+        const catBtns = document.querySelectorAll('.cat-btn');
+        
+        catBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Aktif sınıfı güncelle
+                catBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const category = btn.getAttribute('data-category');
+                
+                faqItems.forEach(item => {
+                    if (category === 'all' || item.getAttribute('data-category') === category) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                        item.classList.remove('active'); 
+                    }
+                });
+                
+                // Aramayı sıfırla
+                document.getElementById('faqSearch').value = '';
+            });
+        });
+
+        // Canlı Arama (Search)
+        const searchInput = document.getElementById('faqSearch');
+        
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Arama yaparken tüm katagorileri sıfırla, hepsinde ara.
+            catBtns.forEach(b => b.classList.remove('active'));
+            document.querySelector('.cat-btn[data-category="all"]').classList.add('active');
+
+            faqItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                    item.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
