@@ -8,3 +8,5 @@ cookies.txt
 # Veritabanı ve log dosyaları
 *.sql
 *.txt
+*.bak
+*.zip
