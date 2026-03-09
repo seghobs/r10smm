@@ -4,3 +4,7 @@ fix_*.php
 list_*.php
 order_error_log.txt
 cookies.txt
+
+# Veritabanı ve log dosyaları
+*.sql
+*.txt
